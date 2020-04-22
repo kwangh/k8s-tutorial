@@ -1,0 +1,27 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tmax:rolebinding:kh
+  namespace: tmax
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: tmax:role:kh
+subjects:
+- kind: ServiceAccount
+  name: kh
+  namespace: tmax
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tmax:rolebinding:dave
+  namespace: tmax
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: tmax:role:dave
+subjects:
+- kind: ServiceAccount
+  name: dave
+  namespace: tmax
