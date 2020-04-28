@@ -1,0 +1,4 @@
+ConfigMapGenerator:
+- name: seccomp
+  files:
+  - seccomp-profile=./prevent-chmod
