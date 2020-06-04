@@ -1,4 +1,6 @@
 ## 생성
+### namespace
+kubectl create -f namespace.yaml
 ### create ssh-key secret and pod
 kubectl apply -f ssh-key-secret.yaml -f ssh-key-pod.yaml
 ### create db secret and pod
