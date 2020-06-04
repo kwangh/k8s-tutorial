@@ -10,7 +10,7 @@ cat /etc/secret-volume/id-rsa
 kubectl delete -f pod.yaml -f secret.yaml
 
 
-## kubectl로 직접 secret 생성
+## kubectl로 직접 secret 생성 (ssh-key 예제)
 kubectl create secret generic ssh-key-secret --from-file=ssh-privatekey=/root/.ssh/id_rsa --from-file=ssh-publickey=/root/.ssh/id_rsa.pub
 
 ## 그외 cmd
