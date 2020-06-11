@@ -18,6 +18,7 @@ limitations under the License.
 package main
 
 import (
+	"bufio"
 	"context"
 	"flag"
 	"fmt"
@@ -62,46 +63,72 @@ func main() {
 	}
 
 	namespace := "default"
-	name := "secret1"
-	secret, err := clientset.CoreV1().Secrets(namespace).Get(context.TODO(), name, metav1.GetOptions{})
-	if errors.IsNotFound(err) {
-		fmt.Printf("Secret %s in namespace %s not found\n", name, namespace)
-	} else if statusError, isStatus := err.(*errors.StatusError); isStatus {
-		fmt.Printf("Error getting secret %s in namespace %s: %v\n",
-			name, namespace, statusError.ErrStatus.Message)
-	} else if err != nil {
-		panic(err.Error())
-	} else {
-		fmt.Printf("Found secret %s in namespace %s\n", name, namespace)
-		for key, val := range secret.Data {
-			fmt.Println(key, val)
-		}
-		fmt.Println("secret type: ", secret.Type)
-	}
-
-	tmp := "test go"
-	secret = &v1.Secret{
+	name := "test-secret"
+	test_data := "test go"
+	secret := &v1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "Secret",
 			APIVersion: "v1",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "ssh-key-secret",
+			Name:      name,
 			Namespace: namespace,
 		},
 		Data: map[string][]byte{
-			"id-rsa": []byte(tmp),
+			"test": []byte(test_data),
 		},
 		Type: "Opaque",
 	}
 
-	_, err = clientset.CoreV1().Secrets(namespace).Create(context.TODO(), secret, metav1.CreateOptions{})
+	secretsClient := clientset.CoreV1().Secrets(namespace)
+	_, err = secretsClient.Create(context.TODO(), secret, metav1.CreateOptions{})
 	if statusError, isStatus := err.(*errors.StatusError); isStatus {
 		fmt.Printf("Error creating secret %s in namespace %s: %v\n",
 			name, namespace, statusError.ErrStatus.Message)
 	} else if err != nil {
 		panic(err.Error())
+	} else {
+		fmt.Printf("secret %s created in namespace %s\n", name, namespace)
 	}
+
+	// get secrets
+	// secret, err := secretsClient.Get(context.TODO(), name, metav1.GetOptions{})
+
+	// List Secrets
+	prompt()
+	fmt.Printf("Listing secrets in namespace %q:\n", v1.NamespaceDefault)
+	list, err := secretsClient.List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		panic(err.Error())
+	}
+
+	for _, d := range list.Items {
+		fmt.Printf(" * %s in namespace %s\n", d.Name, d.Namespace)
+	}
+
+	// Delete Secret
+	prompt()
+	fmt.Println("Deleting secret...")
+	deletePolicy := metav1.DeletePropagationForeground
+	if err := secretsClient.Delete(context.TODO(), name, metav1.DeleteOptions{
+		PropagationPolicy: &deletePolicy,
+	}); err != nil {
+		panic(err.Error())
+	}
+
+	fmt.Println("Deleted secret.")
+}
+
+func prompt() {
+	fmt.Printf("-> Press Return key to continue.")
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		break
+	}
+	if err := scanner.Err(); err != nil {
+		panic(err)
+	}
+	fmt.Println()
 }
 
 func homeDir() string {
