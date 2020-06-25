@@ -7,5 +7,3 @@ spec:
   containers:
   - image: k8s.gcr.io/pause
     name: pause
-  serviceAccount: default
-  serviceAccountName: default
