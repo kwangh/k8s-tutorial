@@ -11,3 +11,7 @@ how to start & use psp in k8s with RBAC
 ## secret
 how to use secrets in k8s
 - https://github.com/kubernetes/community/blob/master/contributors/design-proposals/auth/secrets.md
+
+## kubeadm config
+kubeadm-config.yaml
+- config yaml for kubeadm init 
