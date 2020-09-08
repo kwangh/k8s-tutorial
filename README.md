@@ -4,6 +4,9 @@ k8s tutorial
 ## custom-seccomp-profile
 custom seccomp profile in k8s psp
 
+## easy-pod-creation
+busybox pod for test
+
 ## psp-tutorial
 how to start & use psp in k8s with RBAC
 - https://kubernetes.io/docs/concepts/policy/pod-security-policy/
