@@ -6,8 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	apiv1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -33,35 +31,9 @@ func main() {
 		panic(err.Error())
 	}
 
-	podsClient := clientset.CoreV1().Pods(apiv1.NamespaceDefault)
-	pod := &apiv1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "myapp-pod",
-			Labels: map[string]string{
-				"app": "myapp",
-			},
-		},
-		Spec: apiv1.PodSpec{
-			Containers: []apiv1.Container{
-				{
-					Name:  "myapp-container",
-					Image: "busybox:1.28",
-					Command: []string{
-						"sh",
-						"-c",
-						"echo The app is running! && sleep 3600",
-					},
-				},
-			},
-		},
-	}
-
 	fmt.Println("Creating pod...")
-	result, err := podsClient.Create(pod)
-	if err != nil {
-		panic(err.Error())
-	}
-	fmt.Printf("Created deployment %q.\n", result.GetObjectMeta().GetName())
+	pod, err := CreatePod(clientset)
+	fmt.Printf("Created deployment %q.\n", pod.Name)
 }
 
 func homeDir() string {
