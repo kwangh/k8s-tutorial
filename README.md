@@ -1,6 +1,9 @@
 # k8s-tutorial
 k8s tutorial
 
+## automation-test
+automation test of k8s resources(pod, deployment(replicaset)) using client-go
+
 ## custom-seccomp-profile
 custom seccomp profile in k8s psp
 
