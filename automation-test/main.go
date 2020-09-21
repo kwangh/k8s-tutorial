@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -22,18 +22,43 @@ func main() {
 	// use the current context in kubeconfig
 	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
 	if err != nil {
-		panic(err.Error())
+		log.Fatal(err.Error())
 	}
 
 	// create the clientset
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		panic(err.Error())
+		log.Fatal(err.Error())
 	}
 
-	fmt.Println("Creating pod...")
+	log.Println("Creating a pod...")
 	pod, err := CreatePod(clientset)
-	fmt.Printf("Created deployment %q.\n", pod.Name)
+	// pod is not running
+	if err != nil {
+		log.Printf("Creating pod error: %v", err.Error())
+		if pod != nil {
+			log.Println("Deleting the error pod...")
+			// delete pod with wait 5 minutes
+			err = DeletePodWithWait(clientset, pod)
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+
+			log.Println("Delete success.")
+		}
+
+		return
+	}
+
+	log.Printf("Created the pod %q.\n", pod.Name)
+	log.Println("Deleting the pod...")
+	// delete pod with wait 5 minutes
+	err = DeletePodWithWait(clientset, pod)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	log.Println("Delete success.")
 }
 
 func homeDir() string {

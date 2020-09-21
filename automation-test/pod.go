@@ -5,7 +5,9 @@ import (
 	"time"
 
 	apiv1 "k8s.io/api/core/v1"
+	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	clientset "k8s.io/client-go/kubernetes"
 )
 
@@ -13,7 +15,9 @@ const (
 	// podStartTimeout is how long to wait for the pod to be started.
 	// Initial pod start can be delayed O(minutes) by slow docker pulls.
 	// TODO: Make this 30 seconds once #4566 is resolved.
-	podStartTimeout = 5 * time.Minute
+	podStartTimeout = 30 * time.Second
+	// PodDeleteTimeout is how long to wait for a pod to be deleted.
+	PodDeleteTimeout = 5 * time.Minute
 
 	// poll is how often to poll pods, nodes and claims.
 	poll = 2 * time.Second
@@ -48,10 +52,88 @@ func CreatePod(client clientset.Interface) (*apiv1.Pod, error) {
 		return nil, fmt.Errorf("pod Create API error: %v", err)
 	}
 
+	// Waiting for pod to be running
+	err = WaitForPodNameRunningInNamespace(client, pod.Name, apiv1.NamespaceDefault)
+	if err != nil {
+		return pod, fmt.Errorf("pod %q is not Running: %v", pod.Name, err)
+	}
 	// get fresh pod info
 	pod, err = client.CoreV1().Pods(apiv1.NamespaceDefault).Get(pod.Name, metav1.GetOptions{})
 	if err != nil {
 		return pod, fmt.Errorf("pod Get API error: %v", err)
 	}
 	return pod, nil
+}
+
+// WaitForPodNameRunningInNamespace waits default amount of time (PodStartTimeout) for the specified pod to become running.
+// Returns an error if timeout occurs first, or pod goes in to failed state.
+func WaitForPodNameRunningInNamespace(c clientset.Interface, podName, namespace string) error {
+	return WaitTimeoutForPodRunningInNamespace(c, podName, namespace, podStartTimeout)
+}
+
+// WaitTimeoutForPodRunningInNamespace waits the given timeout duration for the specified pod to become running.
+func WaitTimeoutForPodRunningInNamespace(c clientset.Interface, podName, namespace string, timeout time.Duration) error {
+	return wait.PollImmediate(poll, timeout, podRunning(c, podName, namespace))
+}
+
+// podRunning checks whether pod is running
+func podRunning(client clientset.Interface, podName, namespace string) wait.ConditionFunc {
+	return func() (bool, error) {
+		pod, err := client.CoreV1().Pods(namespace).Get(podName, metav1.GetOptions{})
+		if err != nil {
+			return false, err
+		}
+		switch pod.Status.Phase {
+		case apiv1.PodRunning:
+			return true, nil
+		case apiv1.PodFailed, apiv1.PodSucceeded:
+			// ErrPodCompleted is returned by PodRunning or PodContainerRunning to indicate that
+			// the pod has already reached completed state.
+			return false, fmt.Errorf("pod ran to completion")
+		}
+		return false, nil
+	}
+}
+
+// DeletePodWithWait deletes the passed-in pod and waits for the pod to be terminated. Resilient to the pod
+// not existing.
+func DeletePodWithWait(c clientset.Interface, pod *apiv1.Pod) error {
+	if pod == nil {
+		return nil
+	}
+	return DeletePodWithWaitByName(c, pod.GetName(), pod.GetNamespace())
+}
+
+// DeletePodWithWaitByName deletes the named and namespaced pod and waits for the pod to be terminated. Resilient to the pod
+// not existing.
+func DeletePodWithWaitByName(c clientset.Interface, podName, podNamespace string) error {
+	err := c.CoreV1().Pods(podNamespace).Delete(podName, nil)
+	if err != nil {
+		if apierrs.IsNotFound(err) {
+			return nil // assume pod was already deleted
+		}
+		return fmt.Errorf("pod Delete API error: %v", err)
+	}
+	err = WaitForPodNotFoundInNamespace(c, podName, podNamespace, PodDeleteTimeout)
+	if err != nil {
+		return fmt.Errorf("pod %q was not deleted: %v", podName, err)
+	}
+	return nil
+}
+
+// WaitForPodNotFoundInNamespace returns an error if it takes too long for the pod to fully terminate.
+// Unlike `waitForPodTerminatedInNamespace`, the pod's Phase and Reason are ignored. If the pod Get
+// api returns IsNotFound then the wait stops and nil is returned. If the Get api returns an error other
+// than "not found" then that error is returned and the wait stops.
+func WaitForPodNotFoundInNamespace(c clientset.Interface, podName, ns string, timeout time.Duration) error {
+	return wait.PollImmediate(poll, timeout, func() (bool, error) {
+		_, err := c.CoreV1().Pods(ns).Get(podName, metav1.GetOptions{})
+		if apierrs.IsNotFound(err) {
+			return true, nil // done
+		}
+		if err != nil {
+			return true, err // stop wait with error
+		}
+		return false, nil
+	})
 }
