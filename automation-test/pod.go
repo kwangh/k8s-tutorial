@@ -69,12 +69,9 @@ func CreatePod(client clientset.Interface) (*apiv1.Pod, error) {
 			Containers: []apiv1.Container{
 				{
 					Name:  "myapp-container",
-					Image: "busybox:1.28",
-					Command: []string{
-						"sh",
-						"-c",
-						"echo The app is running! && sleep 3600",
-					},
+					Image: "busybox:1.29",
+					Command: []string{"/bin/sh"},
+					Args:    []string{"-c", "echo The app is running! && sleep 3600"},
 				},
 			},
 		},
