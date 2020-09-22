@@ -31,34 +31,7 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	log.Println("Creating a pod...")
-	pod, err := CreatePod(clientset)
-	// pod is not running
-	if err != nil {
-		log.Printf("Creating pod error: %v", err.Error())
-		if pod != nil {
-			log.Println("Deleting the error pod...")
-			// delete pod with wait 5 minutes
-			err = DeletePodWithWait(clientset, pod)
-			if err != nil {
-				log.Fatal(err.Error())
-			}
-
-			log.Println("Delete success.")
-		}
-
-		return
-	}
-
-	log.Printf("Created the pod %q.\n", pod.Name)
-	log.Println("Deleting the pod...")
-	// delete pod with wait 5 minutes
-	err = DeletePodWithWait(clientset, pod)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	log.Println("Delete success.")
+	TestPod(clientset)
 }
 
 func homeDir() string {

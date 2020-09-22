@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	apiv1 "k8s.io/api/core/v1"
@@ -22,6 +23,38 @@ const (
 	// poll is how often to poll pods, nodes and claims.
 	poll = 2 * time.Second
 )
+
+//TestPod tests pod creation/deletion
+func TestPod(client clientset.Interface) {
+	log.Println("Creating a pod...")
+	pod, err := CreatePod(client)
+	// pod is not running
+	if err != nil {
+		log.Printf("Creating pod error: %v", err.Error())
+		if pod != nil {
+			log.Println("Deleting the error pod...")
+			// delete pod with wait 5 minutes
+			err = DeletePodWithWait(client, pod)
+			if err != nil {
+				log.Fatal(err.Error())
+			}
+
+			log.Println("Delete success.")
+		}
+
+		return
+	}
+
+	log.Printf("Created the pod %q.\n", pod.Name)
+	log.Println("Deleting the pod...")
+	// delete pod with wait 5 minutes
+	err = DeletePodWithWait(client, pod)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	log.Println("Delete success.")
+}
 
 // CreatePod creates a busybox image in default namespace
 func CreatePod(client clientset.Interface) (*apiv1.Pod, error) {
