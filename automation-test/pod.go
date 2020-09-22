@@ -23,7 +23,7 @@ const (
 	poll = 2 * time.Second
 )
 
-// CreatePod with busybox image in default namespace
+// CreatePod creates a busybox image in default namespace
 func CreatePod(client clientset.Interface) (*apiv1.Pod, error) {
 	pod := &apiv1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
