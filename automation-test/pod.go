@@ -27,13 +27,14 @@ func TestPod(client clientset.Interface) {
 				log.Fatal(err.Error())
 			}
 
-			log.Println("Delete success.")
+			log.Println("Delete the error pod.")
 		}
 
 		return
 	}
 
 	log.Printf("Created the pod %q.\n", pod.Name)
+
 	log.Println("Deleting the pod...")
 	// delete pod with wait 5 minutes
 	err = DeletePodWithWait(client, pod)
@@ -41,7 +42,7 @@ func TestPod(client clientset.Interface) {
 		log.Fatal(err.Error())
 	}
 
-	log.Println("Delete success.")
+	log.Println("Deleted the pod.")
 }
 
 // CreatePod creates a busybox image in default namespace
