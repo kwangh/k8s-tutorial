@@ -27,7 +27,7 @@ func TestPod(client clientset.Interface) {
 				log.Fatal(err.Error())
 			}
 
-			log.Println("Delete the error pod.")
+			log.Println("Deleted the error pod.")
 		}
 
 		return
