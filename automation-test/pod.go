@@ -12,18 +12,6 @@ import (
 	clientset "k8s.io/client-go/kubernetes"
 )
 
-const (
-	// podStartTimeout is how long to wait for the pod to be started.
-	// Initial pod start can be delayed O(minutes) by slow docker pulls.
-	// TODO: Make this 30 seconds once #4566 is resolved.
-	podStartTimeout = 30 * time.Second
-	// PodDeleteTimeout is how long to wait for a pod to be deleted.
-	PodDeleteTimeout = 5 * time.Minute
-
-	// poll is how often to poll pods, nodes and claims.
-	poll = 2 * time.Second
-)
-
 //TestPod tests pod creation/deletion
 func TestPod(client clientset.Interface) {
 	log.Println("Creating a pod...")
@@ -68,8 +56,8 @@ func CreatePod(client clientset.Interface) (*apiv1.Pod, error) {
 		Spec: apiv1.PodSpec{
 			Containers: []apiv1.Container{
 				{
-					Name:  "myapp-container",
-					Image: "busybox:1.29",
+					Name:    "myapp-container",
+					Image:   "busybox:1.29",
 					Command: []string{"/bin/sh"},
 					Args:    []string{"-c", "echo The app is running! && sleep 3600"},
 				},

@@ -31,7 +31,8 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	TestPod(clientset)
+	//TestPod(clientset)
+	TestDeployment(clientset)
 }
 
 func homeDir() string {
