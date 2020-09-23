@@ -16,13 +16,35 @@ func TestDeployment(client clientset.Interface) {
 	log.Println("Creating a deployment...")
 	deployment, err := CreateDeployment(client)
 	if err != nil {
-		// need fix
+		log.Printf("Creating deployment error: %v", err.Error())
+		log.Println("Deleting the error deployment...")
+		err = DeleteDeployment(client)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+
+		log.Println("Deleted the error deployment.")
+
+		return
+	}
+	log.Printf("Created the deployment %q.\n", deployment.GetObjectMeta().GetName())
+
+	log.Println("Deleting the deployment...")
+	err = DeleteDeployment(client)
+	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	log.Println(deployment)
+	log.Println("Deleted the deployment.")
+}
 
-	log.Printf("Created the deployment %q.\n", deployment.GetObjectMeta().GetName())
+// DeleteDeployment deletes the deployment
+func DeleteDeployment(client clientset.Interface) error {
+	deletePolicy := metav1.DeletePropagationForeground
+	err := client.AppsV1().Deployments(apiv1.NamespaceDefault).Delete("my-deployment", &metav1.DeleteOptions{
+		PropagationPolicy: &deletePolicy,
+	})
+	return err
 }
 
 // CreateDeployment creates a deployment.
@@ -81,7 +103,7 @@ func WaitForDeploymentComplete(c clientset.Interface, d *appsv1.Deployment) erro
 		reason     string
 	)
 
-	err := wait.PollImmediate(poll, pollLongTimeout, func() (bool, error) {
+	err := wait.PollImmediate(poll, pollShortTimeout, func() (bool, error) {
 		var err error
 		deployment, err = c.AppsV1().Deployments(d.Namespace).Get(d.Name, metav1.GetOptions{})
 		if err != nil {
@@ -94,13 +116,13 @@ func WaitForDeploymentComplete(c clientset.Interface, d *appsv1.Deployment) erro
 		}
 
 		reason = fmt.Sprintf("deployment status: %#v", deployment.Status)
-		log.Println(reason)
+		//log.Println(reason)
 
 		return false, nil
 	})
 
 	if err == wait.ErrWaitTimeout {
-		err = fmt.Errorf("error waiting timeout: %s", reason)
+		return fmt.Errorf("error waiting timeout: %s", reason)
 	}
 	if err != nil {
 		return fmt.Errorf("error waiting for deployment %q status to match expectation: %v", d.Name, err)
