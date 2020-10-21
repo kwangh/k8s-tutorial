@@ -1,0 +1,38 @@
+apiVersion: kubevirt.io/v1alpha3
+kind: VirtualMachine
+metadata:
+  name: windows
+spec:
+  running: true
+  template:
+    spec:
+      domain:
+        resources:
+          requests:
+            memory: 1024M
+          limits:
+            memory: 2048M
+        devices:      
+          disks:
+          - name: containerdisk
+            disk:
+              bus: virtio
+          - name: emptydisk
+            disk:
+              bus: virtio
+          - name: cloudinitdisk
+            disk:
+              bus: virtio
+      volumes:
+      - name: containerdisk
+        containerDisk:
+          image: 172.21.7.5:5000/windows_samsung_v3:2012r2
+      - name: emptydisk
+        emptyDisk:
+          capacity: 2Gi
+      - name: cloudinitdisk
+        cloudInitConfigDrive:
+          userData: |
+            #ps1_sysnative
+            NET USER tmax "Qwer12345" /ADD
+            NET LOCALGROUP "Administrators" "tmax" /add
