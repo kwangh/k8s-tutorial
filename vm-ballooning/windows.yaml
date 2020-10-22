@@ -9,9 +9,9 @@ spec:
       domain:
         resources:
           requests:
-            memory: 1024M
-          limits:
             memory: 2048M
+          limits:
+            memory: 3072M
         devices:      
           disks:
           - name: containerdisk
