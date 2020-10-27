@@ -19,10 +19,21 @@ spec:
           - name: containerdisk
             disk:
               bus: virtio
+          - name: cloudinitdisk
+            disk:
+              bus: virtio
         resources:
           requests:
-            memory: 64M
+            memory: 1024M
+          limits:
+            memory: 2048M
       volumes:
       - name: containerdisk
         containerDisk:
           image: kubevirt/fedora-cloud-container-disk-demo:latest
+      - name: cloudinitdisk
+        cloudInitNoCloud:
+          userData: |-
+            #cloud-config
+            password: a
+            chpasswd: { expire: False }
