@@ -36,7 +36,7 @@ pod 생성 혹은 변경 시 admission controller가 security context와 pod sec
 manifest 방법이 간단하므로 manifest 방법 추천.
 
 #### kubeadm 방법
-enable-admission-plugins에 PodSecurityPolicy 추가
+enable-admission-plugins에 PodSecurityPolicy 추가.
 ```
 apiVersion: kubeadm.k8s.io/v1beta2
 kind: ClusterConfiguration
@@ -50,61 +50,14 @@ apiServer:
   enable-admission-plugins: PodSecurityPolicy,NodeRestriction
 ```
 
-클러스터 구축 후, 아래 psp 적용 필요
-
+kubeadm init시 config 사용
 ```
----
-apiVersion: policy/v1beta1
-kind: PodSecurityPolicy
-metadata:
-  name: privileged
-  annotations:
-    seccomp.security.alpha.kubernetes.io/allowedProfileNames: "*"
-spec:
-  privileged: true
-  allowPrivilegeEscalation: true
-  allowedCapabilities:
-  - "*"
-  volumes:
-  - "*"
-  hostNetwork: true
-  hostPorts:
-  - min: 0
-    max: 65535
-  hostIPC: true
-  hostPID: true
-  runAsUser:
-    rule: 'RunAsAny'
-  seLinux:
-    rule: 'RunAsAny'
-  supplementalGroups:
-    rule: 'RunAsAny'
-  fsGroup:
-    rule: 'RunAsAny'
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: psp:privileged
-rules:
-- apiGroups: ['policy']
-  resources: ['podsecuritypolicies']
-  verbs:     ['use']
-  resourceNames:
-  - privileged
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: default:privileged
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: psp:privileged
-subjects:
-- kind: Group
-  name: system:authenticated
-  apiGroup: rbac.authorization.k8s.io
+kubeadm init --config kubeadm-config.yaml
+```
+
+클러스터 구축 후, init-psp.yaml 적용 필요
+```
+kubectl create -f init-psp.yaml
 ```
 
 #### manifest 방법
@@ -114,7 +67,7 @@ cluster 구축 완료한 상태에서
 PodSecurityPolicy 추가
 --enable-admission-plugins=PodSecurityPolicy,NodeRestriction
 
-마찬가지로 위의 psp 추가 필요
+마찬가지로 위의 psp yaml 적용 필요
 
 ## Authorizing Policies
 PodSecurityPolicy resource가 생성되고 난 뒤에는, authorize 작업이 필요하다. requesting user or target pod’s service account에 use 권한을 부여해줘야 한다.
@@ -127,138 +80,10 @@ PSP를 사용하려면 kubeadm config에 Admission Controller 옵션으로 PodSe
 그리고는 psp와 clusterrole, clusterrolebinding yaml이 필요하다. 3가지를 적용해주지 않으면 pod들이 정상적으로 뜨지 않는다.
 이슈 확인 도중 알게 되었다. https://github.com/kubernetes/minikube/issues/3818
 
-아래 tutorial과 psp 공식 문헌을 참고하여 psp.yaml을 작성하였다.
+아래 tutorial과 psp 공식 문헌을 참고하여 init-psp.yaml을 작성하였다.
 https://minikube.sigs.k8s.io/docs/tutorials/using_psp/#tutorial
 
-```
----
-apiVersion: policy/v1beta1
-kind: PodSecurityPolicy
-metadata:
-  name: privileged
-  annotations:
-    seccomp.security.alpha.kubernetes.io/allowedProfileNames: "*"
-spec:
-  privileged: true
-  allowPrivilegeEscalation: true
-  allowedCapabilities:
-  - "*"
-  volumes:
-  - "*"
-  hostNetwork: true
-  hostPorts:
-  - min: 0
-    max: 65535
-  hostIPC: true
-  hostPID: true
-  runAsUser:
-    rule: 'RunAsAny'
-  seLinux:
-    rule: 'RunAsAny'
-  supplementalGroups:
-    rule: 'RunAsAny'
-  fsGroup:
-    rule: 'RunAsAny'
----
-apiVersion: policy/v1beta1
-kind: PodSecurityPolicy
-metadata:
-  name: restricted
-  annotations:
-    seccomp.security.alpha.kubernetes.io/allowedProfileNames: 'docker/default,runtime/default'
-    apparmor.security.beta.kubernetes.io/allowedProfileNames: 'runtime/default'
-    seccomp.security.alpha.kubernetes.io/defaultProfileName:  'runtime/default'
-    apparmor.security.beta.kubernetes.io/defaultProfileName:  'runtime/default'
-spec:
-  privileged: false
-  allowPrivilegeEscalation: false
-  requiredDropCapabilities:
-    - ALL
-  volumes:
-    - 'configMap'
-    - 'emptyDir'
-    - 'projected'
-    - 'secret'
-    - 'downwardAPI'
-    - 'persistentVolumeClaim'
-  hostNetwork: false
-  hostIPC: false
-  hostPID: false
-  runAsUser:
-    rule: 'MustRunAsNonRoot'
-  seLinux:
-    rule: 'RunAsAny'
-  supplementalGroups:
-    rule: 'MustRunAs'
-    ranges:
-      # Forbid adding the root group.
-      - min: 1
-        max: 65535
-  fsGroup:
-    rule: 'MustRunAs'
-    ranges:
-      # Forbid adding the root group.
-      - min: 1
-        max: 65535
-  readOnlyRootFilesystem: false
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: psp:privileged
-rules:
-- apiGroups: ['policy']
-  resources: ['podsecuritypolicies']
-  verbs:     ['use']
-  resourceNames:
-  - privileged
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: psp:restricted
-rules:
-- apiGroups: ['policy']
-  resources: ['podsecuritypolicies']
-  verbs:     ['use']
-  resourceNames:
-  - restricted
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: default:restricted
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: psp:restricted
-subjects:
-- kind: Group
-  name: system:authenticated
-  apiGroup: rbac.authorization.k8s.io
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: default:privileged
-  namespace: kube-system
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: psp:privileged
-subjects:
-- kind: Group
-  name: system:masters
-  apiGroup: rbac.authorization.k8s.io
-- kind: Group
-  name: system:nodes
-  apiGroup: rbac.authorization.k8s.io
-- kind: Group
-  name: system:serviceaccounts:kube-system
-  apiGroup: rbac.authorization.k8s.io
-```
-
-위의 yaml을 간략하게 설명하면,
+yaml내 clusterrolebinding의 subjects를 설명하면,
 kube-system에서 필요로 하는 clusterrolebinding으로 system:masters, system:nodes, system:serviceaccounts:kube-system에 privileged 권한을 주었다.
 - system:masters는 cluster-admin(Default clusterrole)에 bind 되어있는데, 이는 super user가 resource에 하는 모든 action에 대한 권한 제공.
 - system:nodes는 system:node(Default clusterrole)에 bind 되어 있으며, kubelet component가 필요로 하는 resource들에 권한 제공.
