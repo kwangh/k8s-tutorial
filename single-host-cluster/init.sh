@@ -15,6 +15,6 @@ kubectl taint nodes --all node-role.kubernetes.io/master-
 kubectl apply -f calico/tigera-operator.yaml
 kubectl apply -f calico/custom-resources.yaml
 
-#kubevirt
+# kubevirt
 kubectl apply -f kubevirt/kubevirt-operator.yaml
 kubectl apply -f kubevirt/kubevirt-cr.yaml
