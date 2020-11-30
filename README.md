@@ -1,5 +1,4 @@
 # k8s-tutorial
-k8s tutorial
 
 ## automation-test
 automation test of k8s resources(pod, deployment(replicaset)) using client-go
@@ -18,6 +17,8 @@ how to start & use psp in k8s with RBAC
 how to use secrets in k8s
 - https://github.com/kubernetes/community/blob/master/contributors/design-proposals/auth/secrets.md
 
-## kubeadm config
-kubeadm-config.yaml
-- config yaml for kubeadm init 
+# vm-ballooning
+vm memory resource ballooning research
+
+# vm-replicaset
+vm replicaset w/ hpa research
