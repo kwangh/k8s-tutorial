@@ -11,8 +11,8 @@ how to start & use psp in k8s with RBAC
 how to use secrets in k8s
 - https://github.com/kubernetes/community/blob/master/contributors/design-proposals/auth/secrets.md
 
-# vm-ballooning
+## vm-ballooning
 vm memory resource ballooning research
 
-# vm-replicaset
+## vm-replicaset
 vm replicaset w/ hpa research
