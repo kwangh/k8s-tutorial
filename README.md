@@ -13,9 +13,3 @@ how to use secrets in k8s
 
 ## single-host-cluster
 single host cluster init
-
-## vm-ballooning
-vm memory resource ballooning research
-
-## vm-replicaset
-vm replicaset w/ hpa research
