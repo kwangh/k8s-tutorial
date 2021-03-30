@@ -16,5 +16,5 @@ kubectl apply -f calico/tigera-operator.yaml
 kubectl apply -f calico/custom-resources.yaml
 
 # kubevirt
-kubectl apply -f kubevirt/kubevirt-operator.yaml
-kubectl apply -f kubevirt/kubevirt-cr.yaml
+#kubectl apply -f kubevirt/kubevirt-operator.yaml
+#kubectl apply -f kubevirt/kubevirt-cr.yaml
