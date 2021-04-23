@@ -1,4 +1,7 @@
-# single-host-cluster installation
+## single-host-cluster installation
+
+To init single host cluster run script "init.sh"
+
 `. init.sh`
 
 - kubernetes v1.19.4
