@@ -4,7 +4,7 @@ To init single host cluster run script "init.sh"
 
 `. init.sh`
 
-- kubernetes v1.19.4
+- kubernetes v1.21.0
 - calico v3.17.0
 - kubevirt v0.34.2
 
